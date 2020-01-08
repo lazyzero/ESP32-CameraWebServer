@@ -90,6 +90,12 @@ static int ra_filter_run(ra_filter_t * filter, int value){
     return filter->sum / filter->count;
 }
 
+int setLED(int val) {
+  digitalWrite( BOARD_LED, 1 ^ val);
+  Serial.printf("Switching LED: '%d'\n", val);
+  return 1;
+}
+
 static void rgb_print(dl_matrix3du_t *image_matrix, uint32_t color, const char * str){
     fb_data_t fb;
     fb.width = image_matrix->w;
@@ -426,7 +432,7 @@ static esp_err_t stream_handler(httpd_req_t *req){
         int64_t recognize_time = (fr_recognize - fr_face)/1000;
         int64_t encode_time = (fr_encode - fr_recognize)/1000;
         int64_t process_time = (fr_encode - fr_start)/1000;
-        
+
         int64_t frame_time = fr_end - last_frame;
         last_frame = fr_end;
         frame_time /= 1000;
@@ -519,6 +525,7 @@ static esp_err_t cmd_handler(httpd_req_t *req){
             detection_enabled = val;
         }
     }
+    else if(!strcmp(variable, "led")) res = setLED(val);
     else {
         res = -1;
     }
@@ -566,6 +573,7 @@ static esp_err_t status_handler(httpd_req_t *req){
     p+=sprintf(p, "\"face_detect\":%u,", detection_enabled);
     p+=sprintf(p, "\"face_enroll\":%u,", is_enrolling);
     p+=sprintf(p, "\"face_recognize\":%u", recognition_enabled);
+    p+=sprintf(p, "\"face_recognize\":%u", digitalRead(BOARD_LED));
     *p++ = '}';
     *p++ = 0;
     httpd_resp_set_type(req, "application/json");
@@ -623,7 +631,7 @@ void startCameraServer(){
 
 
     ra_filter_init(&ra_filter, 20);
-    
+
     mtmn_config.min_face = 80;
     mtmn_config.pyramid = 0.7;
     mtmn_config.p_threshold.score = 0.6;
@@ -634,9 +642,9 @@ void startCameraServer(){
     mtmn_config.o_threshold.score = 0.7;
     mtmn_config.o_threshold.nms = 0.4;
     mtmn_config.o_threshold.candidate_number = 1;
-    
+
     face_id_init(&id_list, FACE_ID_SAVE_NUMBER, ENROLL_CONFIRM_TIMES);
-    
+
     Serial.printf("Starting web server on port: '%d'\n", config.server_port);
     if (httpd_start(&camera_httpd, &config) == ESP_OK) {
         httpd_register_uri_handler(camera_httpd, &index_uri);
