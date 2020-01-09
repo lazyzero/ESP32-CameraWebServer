@@ -13,15 +13,16 @@ Find the original code here [https://github.com/espressif/arduino-esp32/tree/mas
 
 Browse to the very cool tool from [CyberChef's](https://gchq.github.io/CyberChef/) and use the both following receipts to convert the index.html in a fromat you can edit or past into camera_index.h.
 
-### Extract HTML
+### Compress for camera_index.h
 
 ```
 Gzip('Dynamic Huffman Coding','index.html','',false)
 To_Hex('Comma')
 Find_/_Replace({'option':'Regex','string':','},', 0x',true,false,true,false)
+Find_/_Replace({'option':'Regex','string':'^'},'0x',true,false,true,false)
 ```
 
-### Compress for camera_index.h
+### Extract HTML
 
 ```
 Remove_whitespace(true,true,true,true,true,false)
@@ -29,7 +30,7 @@ Find_/_Replace({'option':'Simple string','string':','},'',true,false,true,false)
 From_Hex('0x')
 Gunzip()
 ```
-Make sure to add the first leading 0x!
+
 
 ### Determine length of array
 

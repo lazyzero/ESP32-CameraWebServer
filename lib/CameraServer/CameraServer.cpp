@@ -34,6 +34,8 @@
 #define FACE_COLOR_CYAN   (FACE_COLOR_BLUE | FACE_COLOR_GREEN)
 #define FACE_COLOR_PURPLE (FACE_COLOR_BLUE | FACE_COLOR_RED)
 
+#define LED_PWM_CHANNEL 7
+
 typedef struct {
         size_t size; //number of values used for filtering
         size_t index; //current value index
@@ -62,6 +64,9 @@ static int8_t recognition_enabled = 0;
 static int8_t is_enrolling = 0;
 static face_id_list id_list = {0};
 
+int led = 0;
+int ledValue = 255;
+
 static ra_filter_t * ra_filter_init(ra_filter_t * filter, size_t sample_size){
     memset(filter, 0, sizeof(ra_filter_t));
 
@@ -89,10 +94,23 @@ static int ra_filter_run(ra_filter_t * filter, int value){
     }
     return filter->sum / filter->count;
 }
+void updateLED() {
+  if (led == 0) {
+    ledcWrite(LED_PWM_CHANNEL, 0);
+  } else {
+    ledcWrite(LED_PWM_CHANNEL, ledValue);
+  }
+}
 
 int setLED(int val) {
-  digitalWrite( FLASH_LED, val);
-  Serial.printf("Switching LED: '%d'\n", val);
+  led = val;
+  updateLED();
+  return 1;
+}
+
+int setLEDValue(int val) {
+  ledValue = val;
+  updateLED();
   return 1;
 }
 
@@ -526,6 +544,7 @@ static esp_err_t cmd_handler(httpd_req_t *req){
         }
     }
     else if(!strcmp(variable, "led")) res = setLED(val);
+    else if(!strcmp(variable, "led-value")) res = setLEDValue(val);
     else {
         res = -1;
     }
@@ -573,7 +592,8 @@ static esp_err_t status_handler(httpd_req_t *req){
     p+=sprintf(p, "\"face_detect\":%u,", detection_enabled);
     p+=sprintf(p, "\"face_enroll\":%u,", is_enrolling);
     p+=sprintf(p, "\"face_recognize\":%u", recognition_enabled);
-    p+=sprintf(p, "\"face_recognize\":%u", digitalRead(BOARD_LED));
+    p+=sprintf(p, "\"led\":%u", led);
+    p+=sprintf(p, "\"led-value\":%u", ledValue);
     *p++ = '}';
     *p++ = 0;
     httpd_resp_set_type(req, "application/json");

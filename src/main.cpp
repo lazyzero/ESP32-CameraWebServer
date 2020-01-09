@@ -4,11 +4,14 @@
 #include <CameraSetup.h>
 #include <CameraServer.h>
 
+#define LED_PWM_CHANNEL 7
+
 void setup() {
   pinMode( BOARD_LED, OUTPUT );
-  pinMode( FLASH_LED, OUTPUT );
-  digitalWrite( BOARD_LED, true );  
-  digitalWrite( FLASH_LED, false );  
+  ledcSetup(LED_PWM_CHANNEL, 5000, 8);
+  ledcAttachPin( FLASH_LED, LED_PWM_CHANNEL );
+  digitalWrite( BOARD_LED, true );
+  ledcWrite( LED_PWM_CHANNEL, 0 );
   Serial.begin(115200);
   delay( 3000 ); // wait for serial monitor
   Serial.setDebugOutput(true);
@@ -21,9 +24,9 @@ void setup() {
 
   initializeCamera();
 
-  digitalWrite( FLASH_LED, true );  
+  ledcWrite( LED_PWM_CHANNEL, 10 );
   disableWiFi();
-  digitalWrite( FLASH_LED, false );  
+  ledcWrite( LED_PWM_CHANNEL, 0 );
   connectWiFi();
 
   startCameraServer();
