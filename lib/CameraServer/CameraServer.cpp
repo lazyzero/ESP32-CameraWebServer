@@ -91,7 +91,7 @@ static int ra_filter_run(ra_filter_t * filter, int value){
 }
 
 int setLED(int val) {
-  digitalWrite( BOARD_LED, 1 ^ val);
+  digitalWrite( FLASH_LED, val);
   Serial.printf("Switching LED: '%d'\n", val);
   return 1;
 }
